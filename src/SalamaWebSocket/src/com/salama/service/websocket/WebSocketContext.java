@@ -16,6 +16,8 @@ import com.salama.service.clouddata.core.ICloudDataService;
 import com.salama.service.clouddata.core.ICloudDataServiceContext;
 import com.salama.service.core.context.CommonContext;
 import com.salama.service.core.context.ServiceContext;
+import com.salama.service.websocket.core.CloudDataMsgDecoder;
+import com.salama.service.websocket.core.CloudDataMsgDecoder.CommonFieldNames;
 import com.salama.service.websocket.core.net.WsRequestWrapper;
 import com.salama.service.websocket.core.net.WsResponseWrapper;
 import com.salama.service.websocket.core.net.WsSessionWrapper;
@@ -60,14 +62,8 @@ public class WebSocketContext implements CommonContext {
     }
     
     
-    public final static class MsgFieldNames {
-        public final static String ServiceType = "serviceType";
-        public final static String ServiceMethod = "serviceMethod";
-        public final static String Data = "data";
-    }
-    
     @ServerEndpoint(value = URI_ServerEndpoint)
-    protected static class CloudDataEndpoint extends AbstractTextWebSocket {
+    public static class CloudDataEndpoint extends AbstractTextWebSocket {
         private WsSessionWrapper _sessionWrapper;
         
         @Override
@@ -80,37 +76,34 @@ public class WebSocketContext implements CommonContext {
         @Override
         protected void onMsg(String msg) {
             String result = null;
+            String requestId = null; 
             try {
                 //decode msg ------
-                JSONObject jsonObj = new JSONObject(msg);
-                
-                String serviceType = jsonObj.getString(MsgFieldNames.ServiceType);
-                String serviceMethod = jsonObj.getString(MsgFieldNames.ServiceMethod);
-                
-                JSONObject data = jsonObj.getJSONObject(MsgFieldNames.Data);
+                Map<String, String> paramMap = CloudDataMsgDecoder.decodeRequestMsg(msg);
+                requestId = paramMap.get(CommonFieldNames.RequestId); 
 
-                Map<String, String> paramMap = new HashMap<>();
-                if(data != null) {
-                    Iterator<?> iter = data.keys();
-                    while(iter.hasNext()) {
-                        String key = (String) iter.next();
-                        paramMap.put(key, data.optString(key));
-                    }
-                }
                 
                 //invoke cloudDataService -----
                 WsRequestWrapper request = new WsRequestWrapper(_sessionWrapper, paramMap);
-                WsResponseWrapper response = new WsResponseWrapper();  
-                result = _singleton._cloudDataService.cloudDataService(serviceType, serviceMethod, request, response);
+                WsResponseWrapper response = new WsResponseWrapper();
+                
+                result = _singleton._cloudDataService.cloudDataService(
+                        paramMap.get(CommonFieldNames.ServiceType), 
+                        paramMap.get(CommonFieldNames.ServiceMethod), 
+                        request, 
+                        response
+                        );
             } catch (Throwable e) {
                 logger.error(null, e);
             }
             
-            //send response -----
-            if(result == null) {
-                result = "";
+            try {
+                //send response -----
+                JSONObject responseJson = CloudDataMsgDecoder.encodeResponseMsg(requestId, result);
+                sendText(responseJson.toString());
+            } catch (Throwable e) {
+                logger.error(null, e);
             }
-            sendText(result);
         }
         
     } 

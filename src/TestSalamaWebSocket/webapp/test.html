@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="Cache-Control" content="max-age=1" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+
+    <title>测试</title>
+
+    <script src='jslib/jquery-1.9.1.min.js'></script>
+    <script src='myjslib/SalamaWebSocket.js' ></script>
+
+
+    <script>
+        var _socket = salamaSocket.build();
+
+        $(document).ready(function() {
+            $(btnTest1).bind("click", function() {
+                for(var i = 0; i < 100; i++) {
+                    _socket.sendRequest({
+                        data: {
+                            serviceType: "salama.test.websocket.service.EchoService",
+                            serviceMethod: "test_1",
+                            param1: "param1[" + i + "]",
+                            param2: "param2[" + i + "]",
+                        },
+                        success: function(result) {
+                            console.log("success -> " + result);
+                            $('#resp_1').text(result);
+                        },
+                        error: function() {
+                            console.log("Error");
+                        }
+                    });
+                }
+            })
+        });
+    </script>
+</head>
+
+<body>
+<div style="width:100%; height: 480px;">
+    <div style="height: 40px;">
+        <input type="button" id="btnTest1" style="background-color: floralwhite; width: 80px; height: 30px;" value="test1" />
+    </div>
+    <div>
+        <label style="padding: 2px;">response:</label>
+        <pre id="resp_1" style="background-color: aqua; font-size: x-large;"></pre>
+    </div>
+</div>
+</body>
+</html>

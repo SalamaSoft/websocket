@@ -60,9 +60,9 @@ public abstract class AbstractTextWebSocket extends Endpoint {
 
         @Override
         public void onMessage(String msg, boolean last) {
-            if(logger.isDebugEnabled()) {
-                logger.debug("session[" + _session.getId() + "] onMessage()" + " length:" + msg.length() + " last:" + last);
-            }
+//            if(logger.isDebugEnabled()) {
+//                logger.debug("session[" + _session.getId() + "] onMessage()" + " length:" + msg.length() + " last:" + last);
+//            }
             
             _msgList.add(msg);
             
